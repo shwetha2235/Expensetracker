@@ -1,0 +1,52 @@
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
+
+function ExportPDF() {
+  const exportPDF = async () => {
+    const snapshot = await getDocs(collection(db, "transactions"));
+
+    const transactions = snapshot.docs.map((doc) => doc.data());
+
+    const pdf = new jsPDF();
+
+    pdf.setFontSize(18);
+    pdf.text("Expense Tracker Report", 14, 20);
+
+    const tableData = transactions.map((item) => [
+      item.title,
+      item.amount,
+      item.type,
+      new Date(item.date).toLocaleDateString(),
+    ]);
+
+    autoTable(pdf, {
+      head: [["Title", "Amount", "Type", "Date"]],
+      body: tableData,
+      startY: 30,
+    });
+
+    pdf.save("Expense_Report.pdf");
+  };
+
+  return (
+    <button
+      onClick={exportPDF}
+      style={{
+        width: "100%",
+        marginTop: "15px",
+        padding: "12px",
+        backgroundColor: "#dc3545",
+        color: "white",
+        border: "none",
+        borderRadius: "6px",
+        cursor: "pointer",
+      }}
+    >
+      Export PDF
+    </button>
+  );
+}
+
+export default ExportPDF;
