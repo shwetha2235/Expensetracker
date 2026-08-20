@@ -1,0 +1,54 @@
+import { useEffect, useState } from "react";
+import { db } from "../firebase";
+import { collection, onSnapshot } from "firebase/firestore";
+
+function Dashboard() {
+  const [income, setIncome] = useState(0);
+  const [expense, setExpense] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "transactions"),
+      (snapshot) => {
+        let totalIncome = 0;
+        let totalExpense = 0;
+
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+
+          if (data.type === "income") {
+            totalIncome += data.amount;
+          } else {
+            totalExpense += data.amount;
+          }
+        });
+
+        setIncome(totalIncome);
+        setExpense(totalExpense);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  return (
+    <div className="summary">
+      <div className="card income">
+        <h3>Income</h3>
+        <p>₹{income}</p>
+      </div>
+
+      <div className="card expense">
+        <h3>Expense</h3>
+        <p>₹{expense}</p>
+      </div>
+
+      <div className="card balance">
+        <h3>Balance</h3>
+        <p>₹{income - expense}</p>
+      </div>
+    </div>
+  );
+}
+
+export default Dashboard;
