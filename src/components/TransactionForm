@@ -1,0 +1,95 @@
+import { useState, useEffect } from "react";
+import { db } from "../firebase";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
+
+function TransactionForm({
+  selectedTransaction,
+  setSelectedTransaction,
+}) {
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
+  const [type, setType] = useState("expense");
+
+  useEffect(() => {
+    if (selectedTransaction) {
+      setTitle(selectedTransaction.title);
+      setAmount(selectedTransaction.amount);
+      setType(selectedTransaction.type);
+    }
+  }, [selectedTransaction]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!title || !amount) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    try {
+      if (selectedTransaction) {
+        await updateDoc(
+          doc(db, "transactions", selectedTransaction.id),
+          {
+            title,
+            amount: Number(amount),
+            type,
+          }
+        );
+
+        alert("Transaction updated successfully!");
+      } else {
+        await addDoc(collection(db, "transactions"), {
+          title,
+          amount: Number(amount),
+          type,
+          date: new Date().toISOString(),
+        });
+
+        alert("Transaction added successfully!");
+      }
+
+      setTitle("");
+      setAmount("");
+      setType("expense");
+      setSelectedTransaction(null);
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong!");
+    }
+  };
+
+  return (
+    <form className="form" onSubmit={handleSubmit}>
+      <input
+        type="text"
+        placeholder="Enter Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+
+      <input
+        type="number"
+        placeholder="Enter Amount"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+      />
+
+      <select value={type} onChange={(e) => setType(e.target.value)}>
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+      </select>
+
+      <button type="submit">
+        {selectedTransaction ? "Update Transaction" : "Add Transaction"}
+      </button>
+    </form>
+  );
+}
+
+export default TransactionForm;
